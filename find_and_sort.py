@@ -1,43 +1,38 @@
 import os
-import sorted_file
 
 
+def find_dir():
+    current_directory = os.getcwd()
+    return current_directory
 
 
-file_names = []
-file_size = []
+def list_items():
+    current_directory = find_dir()
+    directory = os.path.expanduser(current_directory)
+    files = os.listdir(directory)
 
-directory = os.path.expanduser("~/Desktop/music")
-files = os.listdir(directory)
+    return files
 
-for file_name in files:
-    file_names.append(file_name)
 
-# print(f"{file_names} \n")
-# meta_data = os.stat(file_names[0])
+def get_data():
+    pure_meta = []
 
-file_paths = []
+    for n in list_items():
+        name = os.path.basename(n)
+        size = os.path.getsize(n)
+        pure_meta.append((name, size))
 
-for i in file_names:
-    file_paths.append(f"~/Desktop/music/{i}")
+    return pure_meta
 
-# print(file_paths)
 
-pure_meta = []
+def sorted_data():
+    return sorted(get_data(), key=lambda x: x[1])
 
-for d in file_paths:
-    meta_data = os.path.expanduser(d)
-    data = os.stat(meta_data)
-    # print(data)
-    pure_meta.append(data)
 
-for sz in pure_meta:
-    file_size.append(sz.st_size)
+def text_file():
+    with open('sorted_metadata.txt', 'w') as file:
+        for item in sorted_data():
+            file.write(f"Name: {item[0]} - Size: {item[1]} bytes\n")
 
-couple = list(zip(file_size, file_names))
 
-sp = sorted(couple)
-sorted_file.add_by_order(sp)
-
-print(f"{sorted_file.sorted_files}\n")
-
+text_file()
