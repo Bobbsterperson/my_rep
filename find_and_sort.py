@@ -14,10 +14,17 @@ def get_data(directory, files):
     pure_meta = []
     for n in files:
         full_path = os.path.join(directory, n)
-        file_stat = os.stat(full_path)
-        name = os.path.basename(full_path)
-        size = file_stat.st_size
-        pure_meta.append((name, size))
+        if os.path.isdir(full_path):
+            if n == "venv":
+                continue
+            sub_files = list_items(full_path)
+            sub_meta = get_data(full_path, sub_files)
+            pure_meta.extend(sub_meta)
+        else:
+            file_stat = os.stat(full_path)
+            name = os.path.basename(full_path)
+            size = file_stat.st_size
+            pure_meta.append((name, size))
     return pure_meta
 
 
@@ -29,6 +36,7 @@ def create_and_write_text_file(data):
     with open('sorted_metadata.txt', 'w') as file:
         for item in data:
             file.write(f"Name: {item[0]} - Size: {item[1]} bytes\n")
+        file.write("\n")
 
 
 def main():
