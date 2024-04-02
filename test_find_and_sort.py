@@ -39,19 +39,24 @@ class TestParseArguments(unittest.TestCase):
 class TestListItems(unittest.TestCase):
 
 
-    def item_list(directory):
-        return os.listdir(directory)
-
-
     @patch('os.listdir')
     def test_lst_itm(self, mock_listdir):
-        expected_result = item_list
+        expected_result = get_directory(),os.listdir
         mock_listdir.return_value = expected_result
         result = list_items(os.listdir)
         self.assertEqual(result, expected_result)
 
 
+class TestGetDirectory(unittest.TestCase):
 
+    def test_get_directory(self):
+        result = get_directory()
+        expected_result = os.getcwd()
+        self.assertEqual(result, expected_result)
+
+
+if __name__ == '__main__':
+    unittest.main()
     
     
 
