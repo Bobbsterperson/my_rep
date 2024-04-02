@@ -2,7 +2,9 @@ import argparse
 import unittest
 from unittest.mock import patch
 from find_and_sort_pick_db_or_txt import parse_arguments
-
+from find_and_sort_pick_db_or_txt import list_items
+import os
+from find_and_sort_pick_db_or_txt import get_directory
 
 class TestParseArguments(unittest.TestCase):
     
@@ -20,7 +22,7 @@ class TestParseArguments(unittest.TestCase):
         expected_args = argparse.Namespace(database = True,text = False)  # Nenespace is a placeholder for parsed arguments in terminal
         mock_parse_args.return_value = expected_args
         parsed_args = parse_arguments()
-        self.assertEqual(parsed_args, "database")   #parsed args ==True not "database"
+        self.assertEqual(parsed_args, "database")   
 
 
     @patch('argparse.ArgumentParser.parse_args')
@@ -33,6 +35,23 @@ class TestParseArguments(unittest.TestCase):
             self.assertEqual(e.code,2)
 
 
-if __name__ == '__main__':
-    unittest.main()
+
+class TestListItems(unittest.TestCase):
+
+
+    def item_list(directory):
+        return os.listdir(directory)
+
+
+    @patch('os.listdir')
+    def test_lst_itm(self, mock_listdir):
+        expected_result = item_list
+        mock_listdir.return_value = expected_result
+        result = list_items(os.listdir)
+        self.assertEqual(result, expected_result)
+
+
+
     
+    
+
