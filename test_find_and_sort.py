@@ -69,8 +69,6 @@ class TestSortedData(unittest.TestCase):
     
 class testTextfile(unittest.TestCase):
 
-    def generate_file_path(self, directory):
-        return os.path.join(directory, 'sorted_metadata.txt')
 
     def write_metadata_to_file(self, file_path, data):
         with open(file_path, 'w') as file:
@@ -90,7 +88,7 @@ class testTextfile(unittest.TestCase):
         content = file.read()
         print(content)
 
-    print(generate_file_path)
+
 if __name__ == '__main__':
     unittest.main()
     
