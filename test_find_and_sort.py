@@ -5,6 +5,9 @@ from find_and_sort_pick_db_or_txt import parse_arguments
 from find_and_sort_pick_db_or_txt import list_items
 import os
 from find_and_sort_pick_db_or_txt import get_directory
+from find_and_sort_pick_db_or_txt import sorted_data
+from find_and_sort_pick_db_or_txt import create_and_write_text_file
+
 
 class TestParseArguments(unittest.TestCase):
     
@@ -55,8 +58,37 @@ class TestGetDirectory(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
 
+class TestSortedData(unittest.TestCase):
+
+    def test_sorted_data(self):
+        unsorted_data = [('txt', 3), ('filename', 2), ('file', 1)]
+        result = sorted_data(unsorted_data)
+        expected_result = [('file', 1), ('filename', 2), ('txt', 3)]
+        self.assertEqual(result, expected_result)
+
+    
+class testTextfile(unittest.TestCase):
+
+    def generate_file_path(self, directory):
+        return os.path.join(directory, 'sorted_metadata.txt')
+
+    def write_metadata_to_file(self, file_path, data):
+        with open(file_path, 'w') as file:
+            for item in data:
+                file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
+            file.write("\n")
+
+    def test_generate_file_path(self):
+        directory = '/path/to/directory'
+        expected_result = '/path/to/directory/sorted_metadata.txt'
+        result = self.generate_file_path(directory)
+        self.assertEqual(result, expected_result)
+    
+
+    # def test_create_file(self, ):
+    #     create_and_write_text_file()
+
+
 if __name__ == '__main__':
     unittest.main()
     
-    
-
