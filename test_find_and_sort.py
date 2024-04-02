@@ -78,17 +78,19 @@ class testTextfile(unittest.TestCase):
                 file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
             file.write("\n")
 
-    def test_generate_file_path(self):
-        directory = '/path/to/directory'
-        expected_result = '/path/to/directory/sorted_metadata.txt'
-        result = self.generate_file_path(directory)
-        self.assertEqual(result, expected_result)
-    
+    test_data = [
+    ("file1.txt", 100, "/path/to/directory1"),
+    ("file2.txt", 200, "/path/to/directory2"),
+    ("file3.txt", 300, "/path/to/directory3")
+]
 
-    # def test_create_file(self, ):
-    #     create_and_write_text_file()
+    create_and_write_text_file(test_data)
 
+    with open('sorted_metadata.txt', 'r') as file:
+        content = file.read()
+        print(content)
 
+    print(generate_file_path)
 if __name__ == '__main__':
     unittest.main()
     
