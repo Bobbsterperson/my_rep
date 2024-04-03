@@ -92,33 +92,51 @@ class TestTextfile(unittest.TestCase):
         self.assertIn("Directory: /path/to/directory3 - Name: file3.txt - Size: 300 bytes", content)
 
 
-# class TestDatabase(unittest.TestCase):
-
-#     def setUp(self):       
-#         self.conn = sqlite3.connect(":memory:")  # Use in-memory database
-#         self.cursor = self.conn.cursor()
-
-#     def tearDown(self):
-#         self.cursor.close()
-#         self.conn.close()
-
-#     def test_create_and_write_to_database(self):
-
-#         test_data = [("file1.txt", 100, "/path/to/dir1"),
-#                      ("file2.txt", 200, "/path/to/dir2")]
-
-#         create_and_write_to_database(test_data)
-
-#         self.cursor.execute("SELECT * FROM file_metadata")
-#         result = self.cursor.fetchall()
-#         self.assertEqual(len(result), len(test_data))
-
-#         for item in test_data:
-#             self.assertIn(item, result)
-
-class testGetdata(unittest.TestCase):
+class TestDatabase(unittest.TestCase):
 
     
+    def setUp(self):       
+        self.conn = sqlite3.connect(":memory:")  # Use in-memory database
+        self.cursor = self.conn.cursor()
+
+    def tearDown(self):
+        self.cursor.close()
+        self.conn.close()
+
+    # def test_data_insertion(self):
+    #     test_data = [("file1.txt", 100, "/path/to/dir1"),
+    #                  ("file2.txt", 200, "/path/to/dir2")]
+
+    #     create_and_write_to_database(test_data)
+
+    #     self.cursor.execute("SELECT * FROM file_metadata")
+    #     result = self.cursor.fetchall()
+
+    #     self.assertEqual(len(result), len(test_data))
+
+    #     for item in test_data:
+    #         self.assertIn(item, result)
+
+
+    def test_schema_creation(self):
+
+        create_and_write_to_database([])  # No data is needed for this test
+
+        self.cursor.execute("PRAGMA table_info(file_metadata)")
+        schema = self.cursor.fetchall()
+
+        expected_columns = [("id", "INTEGER", 0, None, 1),
+                            ("name", "TEXT", 0, None, 0),
+                            ("size", "INTEGER", 0, None, 0),
+                            ("directory", "TEXT", 0, None, 0)]
+
+
+        for expected_column, actual_column in zip(expected_columns, schema):
+            self.assertEqual(expected_column, actual_column[:4])
+
+
+class TestGetData(unittest.TestCase):
+
     @patch("find_and_sort_pick_db_or_txt.os")
     def test_get_data(self, mock_os):
         self.mock_os = mock_os
