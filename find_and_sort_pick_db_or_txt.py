@@ -61,6 +61,13 @@ def write_to_database(data):
     cursor.close()
     conn.close()
 
+def get_data_from_database():
+    conn = sqlite3.connect("sqlite.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM file_metadata")
+    result = cursor.fetchall()
+    conn.close()
+    return result
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Output file metadata to either a text file or a SQLite database.")
