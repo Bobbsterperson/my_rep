@@ -69,7 +69,6 @@ def get_data_from_database():
     conn.close()
     return result
 
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Output file metadata to either a text file or a SQLite database.")
     parser.add_argument("-t", "--text", action="store_true", help="Output to text")
