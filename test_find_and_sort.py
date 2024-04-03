@@ -94,16 +94,12 @@ class TestTextfile(unittest.TestCase):
 
 class TestDatabaseFunctions(unittest.TestCase):
 
-
     def setUp(self):
-
         if os.path.exists("sqlite.db"):
             os.remove("sqlite.db")
 
     def test_create_database(self):
-
         create_database()
-
         self.assertTrue(os.path.exists("sqlite.db"))
         conn = sqlite3.connect("sqlite.db")
         cursor = conn.cursor()
@@ -123,30 +119,24 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test_data_insertion(self):
-    
         data = [("file1.txt", 100, "/path/to/directory1"),
                 ("file2.txt", 200, "/path/to/directory2")]
-
-        create_database()
-        write_to_database(data)
-
         conn = sqlite3.connect("sqlite.db")
         cursor = conn.cursor()
+        create_database()
+        write_to_database(data, cursor)
         cursor.execute("SELECT * FROM file_metadata")
         result = cursor.fetchall()
         conn.close()
         self.assertEqual(len(result), len(data))
 
-
     @patch('find_and_sort_pick_db_or_txt.sqlite3.connect')
     def test_data_retrieval(self, mock_connect):
-
         data = [("file1.txt", 100, "/path/to/directory1"),
                 ("file2.txt", 200, "/path/to/directory2")]
-
         mock_cursor = mock_connect.return_value.cursor.return_value
         mock_cursor.fetchall.return_value = data
-        result = get_data_from_database()
+        result = get_data_from_database(mock_cursor)
         self.assertEqual(result, data)
 
 
