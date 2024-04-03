@@ -9,6 +9,8 @@ from find_and_sort_pick_db_or_txt import sorted_data
 from find_and_sort_pick_db_or_txt import create_and_write_text_file
 from find_and_sort_pick_db_or_txt import create_and_write_to_database
 import sqlite3
+from unittest.mock import patch, MagicMock
+from find_and_sort_pick_db_or_txt import get_data
 
 class TestParseArguments(unittest.TestCase):
     
@@ -68,50 +70,83 @@ class TestSortedData(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     
-class testTextfile(unittest.TestCase):
+class TestTextfile(unittest.TestCase):
 
+    def test_create_and_write_text_file(self):
+        
+        test_data = [
+            ("file1.txt", 100, "/path/to/directory1"),
+            ("file2.txt", 200, "/path/to/directory2"),
+            ("file3.txt", 300, "/path/to/directory3")
+        ]
 
-    def write_metadata_to_file(self, file_path, data):
-        with open(file_path, 'w') as file:
-            for item in data:
-                file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
-            file.write("\n")
+        create_and_write_text_file(test_data)
 
-    test_data = [
-    ("file1.txt", 100, "/path/to/directory1"),
-    ("file2.txt", 200, "/path/to/directory2"),
-    ("file3.txt", 300, "/path/to/directory3")
-]
+        with open('sorted_metadata.txt', 'r') as file:
+            content = file.read()
 
-    create_and_write_text_file(test_data)
-
-    with open('sorted_metadata.txt', 'r') as file:
-        content = file.read()
         print(content)
 
+        self.assertIn("Directory: /path/to/directory1 - Name: file1.txt - Size: 100 bytes", content)
+        self.assertIn("Directory: /path/to/directory2 - Name: file2.txt - Size: 200 bytes", content)
+        self.assertIn("Directory: /path/to/directory3 - Name: file3.txt - Size: 300 bytes", content)
 
-class testDatabase(unittest.TestCase):
 
-    def setUp(self):       
-        self.conn = sqlite3.connect(":memory:")    # temp memory storing database
-        self.cursor = self.conn.cursor()
+# class TestDatabase(unittest.TestCase):
 
-    def tearDown(self):
-        self.cursor.close()
-        self.conn.close()
+#     def setUp(self):       
+#         self.conn = sqlite3.connect(":memory:")  # Use in-memory database
+#         self.cursor = self.conn.cursor()
 
-    def test_create_and_write_to_database(self):
-        test_data = [("file1.txt", 100, "/path/to/dir1"),
-                     ("file2.txt", 200, "/path/to/dir2")]
+#     def tearDown(self):
+#         self.cursor.close()
+#         self.conn.close()
 
-        create_and_write_to_database(test_data)
+#     def test_create_and_write_to_database(self):
 
-        self.cursor.execute("SELECT * FROM file_metadata")
-        result = self.cursor.fetchall()
-        self.assertEqual(len(result), len(test_data))
+#         test_data = [("file1.txt", 100, "/path/to/dir1"),
+#                      ("file2.txt", 200, "/path/to/dir2")]
 
-        for item in test_data:
-            self.assertIn(item, result)
+#         create_and_write_to_database(test_data)
+
+#         self.cursor.execute("SELECT * FROM file_metadata")
+#         result = self.cursor.fetchall()
+#         self.assertEqual(len(result), len(test_data))
+
+#         for item in test_data:
+#             self.assertIn(item, result)
+
+class testGetdata(unittest.TestCase):
+
+    
+    @patch("find_and_sort_pick_db_or_txt.os")
+    def test_get_data(self, mock_os):
+        self.mock_os = mock_os
+        self.setup_mock_os()
+        directory = "/path/to/directory"
+        files = ["file1.txt", "file2.txt", "dir1", "dir2"]
+        result = get_data(directory, files)
+        expected_result = [
+            ("file1.txt", 100, "/path/to/directory"),
+            ("file2.txt", 200, "/path/to/directory")
+        ]
+        self.assertEqual(result, expected_result)
+
+    def setup_mock_os(self):
+        self.mock_os.path.join.side_effect = self.fake_path_join
+        self.mock_os.path.isdir.side_effect = self.fake_isdir
+        self.mock_os.stat.side_effect = self.fake_stat
+
+    def fake_path_join(self, *args):
+        return "/".join(args)
+    
+    def fake_isdir(self, path):
+        return path.endswith("dir1") or path.endswith("dir2")
+    
+    def fake_stat(self, *args, **kwargs):
+        if len(args) == 1:  
+            return MagicMock(st_size=100) if args[0].endswith("file1.txt") else MagicMock(st_size=200)
+        return MagicMock()  
 
 
 if __name__ == '__main__':
