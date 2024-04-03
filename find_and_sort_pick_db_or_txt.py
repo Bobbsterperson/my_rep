@@ -47,26 +47,18 @@ def create_database():
     cursor.execute('''CREATE TABLE IF NOT EXISTS file_metadata 
                           (id INTEGER PRIMARY KEY, name TEXT, size INTEGER, directory TEXT)''')
     conn.commit()
-    cursor.close()
-    conn.close()
+    return cursor
 
-def write_to_database(data):
-    conn = sqlite3.connect("sqlite.db")
-    cursor = conn.cursor()
+def write_to_database(data, cursor):
     for item in data:
         name, size, directory = item
         cursor.execute('''INSERT INTO file_metadata (name, size, directory) 
                               VALUES (?, ?, ?)''', (name, size, directory))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    
 
-def get_data_from_database():
-    conn = sqlite3.connect("sqlite.db")
-    cursor = conn.cursor()
+def get_data_from_database(cursor):
     cursor.execute("SELECT * FROM file_metadata")
     result = cursor.fetchall()
-    conn.close()
     return result
 
 
@@ -75,7 +67,6 @@ def parse_arguments():
     parser.add_argument("-t", "--text", action="store_true", help="Output to text")
     parser.add_argument("-db", "--database", action="store_true", help="Output to SQLite database")
     args = parser.parse_args()
-    print(parser.parse_args())
 
     if args.text:
         return 'text'
@@ -95,8 +86,9 @@ def main():
     if output_type == 'text':
         create_and_write_text_file(sorted_data_result)
     elif output_type == 'database':
-        create_database()
-        write_to_database(sorted_data_result)
+        crt_db = create_database()
+    
+        write_to_database(sorted_data_result, crt_db)
     else:
         print("Invalid output type specified. Please specify either '-t' for text file or '-db' for SQLite database.")
 
