@@ -12,6 +12,7 @@ from find_and_sort_pick_db_or_txt import write_to_database
 import sqlite3
 from unittest.mock import patch, MagicMock
 from find_and_sort_pick_db_or_txt import get_data
+from find_and_sort_pick_db_or_txt import get_data_from_database
 
 class TestParseArguments(unittest.TestCase):
     
@@ -86,14 +87,13 @@ class TestTextfile(unittest.TestCase):
         with open('sorted_metadata.txt', 'r') as file:
             content = file.read()
 
-        print(content)
-
         self.assertIn("Directory: /path/to/directory1 - Name: file1.txt - Size: 100 bytes", content)
         self.assertIn("Directory: /path/to/directory2 - Name: file2.txt - Size: 200 bytes", content)
         self.assertIn("Directory: /path/to/directory3 - Name: file3.txt - Size: 300 bytes", content)
 
 
 class TestDatabaseFunctions(unittest.TestCase):
+
 
     def setUp(self):
 
@@ -112,37 +112,44 @@ class TestDatabaseFunctions(unittest.TestCase):
         conn.close()
         self.assertIsNotNone(result)
 
-    # def test_write_to_database(self):
-    #     # Sample data to write to the database
-    #     data = [("file1.txt", 100, "/path/to/directory1"),
-    #             ("file2.txt", 200, "/path/to/directory2")]
+    def test_database_creation(self):
+        create_database()
+        self.assertTrue(os.path.exists("sqlite.db"))
+        conn = sqlite3.connect("sqlite.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='file_metadata'")
+        result = cursor.fetchone()
+        conn.close()
+        self.assertIsNotNone(result)
 
-    #     # Call the function to be tested
-    #     create_database()
-    #     write_to_database(data)
+    def test_data_insertion(self):
+    
+        data = [("file1.txt", 100, "/path/to/directory1"),
+                ("file2.txt", 200, "/path/to/directory2")]
 
-    #     # Connect to the database and fetch the data
-    #     conn = sqlite3.connect("sqlite.db")
-    #     cursor = conn.cursor()
-    #     cursor.execute("SELECT * FROM file_metadata")
-    #     result = cursor.fetchall()
-    #     conn.close()
+        create_database()
+        write_to_database(data)
 
-    #     # Check if the data was inserted correctly
-    #     self.assertEqual(len(result), len(data))
-    #     sorted_data = sorted(data)
-    #     sorted_result = sorted(result)
-    #     print("Expected data:", sorted_data)
-    #     print("Retrieved data:")
-    #     for item in sorted_result:
-    #         print(item)
-    #     for i, item in enumerate(sorted_data):
-    #         print("Checking item:", item)
-    #         if item not in sorted_result:
-    #             print("Item not found in retrieved data.")
-    #         self.assertIn(item, sorted_result)
+        conn = sqlite3.connect("sqlite.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM file_metadata")
+        result = cursor.fetchall()
+        conn.close()
+        self.assertEqual(len(result), len(data))
 
 
+
+
+    @patch('find_and_sort_pick_db_or_txt.sqlite3.connect')
+    def test_data_retrieval(self, mock_connect):
+
+        data = [("file1.txt", 100, "/path/to/directory1"),
+                ("file2.txt", 200, "/path/to/directory2")]
+
+        mock_cursor = mock_connect.return_value.cursor.return_value
+        mock_cursor.fetchall.return_value = data
+        result = get_data_from_database()
+        self.assertEqual(result, data)
 
 
 class TestGetData(unittest.TestCase):
