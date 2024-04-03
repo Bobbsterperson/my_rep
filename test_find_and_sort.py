@@ -7,7 +7,8 @@ import os
 from find_and_sort_pick_db_or_txt import get_directory
 from find_and_sort_pick_db_or_txt import sorted_data
 from find_and_sort_pick_db_or_txt import create_and_write_text_file
-
+from find_and_sort_pick_db_or_txt import create_and_write_to_database
+import sqlite3
 
 class TestParseArguments(unittest.TestCase):
     
@@ -44,11 +45,11 @@ class TestListItems(unittest.TestCase):
 
     @patch('os.listdir')
     def test_lst_itm(self, mock_listdir):
-        expected_result = get_directory(),os.listdir
+        expected_result = get_directory(),os.listdir # if i put this line after = in ("") it still works...
         mock_listdir.return_value = expected_result
         result = list_items(os.listdir)
         self.assertEqual(result, expected_result)
-
+    
 
 class TestGetDirectory(unittest.TestCase):
 
@@ -87,6 +88,30 @@ class testTextfile(unittest.TestCase):
     with open('sorted_metadata.txt', 'r') as file:
         content = file.read()
         print(content)
+
+
+class testDatabase(unittest.TestCase):
+
+    def setUp(self):       
+        self.conn = sqlite3.connect(":memory:")    # temp memory storing database
+        self.cursor = self.conn.cursor()
+
+    def tearDown(self):
+        self.cursor.close()
+        self.conn.close()
+
+    def test_create_and_write_to_database(self):
+        test_data = [("file1.txt", 100, "/path/to/dir1"),
+                     ("file2.txt", 200, "/path/to/dir2")]
+
+        create_and_write_to_database(test_data)
+
+        self.cursor.execute("SELECT * FROM file_metadata")
+        result = self.cursor.fetchall()
+        self.assertEqual(len(result), len(test_data))
+
+        for item in test_data:
+            self.assertIn(item, result)
 
 
 if __name__ == '__main__':
