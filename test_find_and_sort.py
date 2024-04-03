@@ -138,8 +138,6 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.assertEqual(len(result), len(data))
 
 
-
-
     @patch('find_and_sort_pick_db_or_txt.sqlite3.connect')
     def test_data_retrieval(self, mock_connect):
 
