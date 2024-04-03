@@ -9,6 +9,7 @@ def get_directory():
 
 def list_items(directory):
     return os.listdir(directory)
+    
 
 
 def get_data(directory, files):
@@ -39,11 +40,19 @@ def create_and_write_text_file(data):
             file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
         file.write("\n")
 
-def create_and_write_to_database(data):
+
+def create_database():
     conn = sqlite3.connect("sqlite.db")
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS file_metadata 
                           (id INTEGER PRIMARY KEY, name TEXT, size INTEGER, directory TEXT)''')
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def write_to_database(data):
+    conn = sqlite3.connect("sqlite.db")
+    cursor = conn.cursor()
     for item in data:
         name, size, directory = item
         cursor.execute('''INSERT INTO file_metadata (name, size, directory) 
@@ -52,12 +61,21 @@ def create_and_write_to_database(data):
     cursor.close()
     conn.close()
 
+def get_data_from_database():
+    conn = sqlite3.connect("sqlite.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM file_metadata")
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Output file metadata to either a text file or a SQLite database.")
-    parser.add_argument("-t", "--text", action="store_true", help="Output to text file")
+    parser.add_argument("-t", "--text", action="store_true", help="Output to text")
     parser.add_argument("-db", "--database", action="store_true", help="Output to SQLite database")
     args = parser.parse_args()
+    print(parser.parse_args())
 
     if args.text:
         return 'text'
@@ -65,6 +83,7 @@ def parse_arguments():
         return 'database'
     else:
         parser.error("Please specify either '-t' for text file or '-db' for SQLite database.")
+
 
 def main():
     output_type = parse_arguments()
@@ -75,8 +94,13 @@ def main():
     
     if output_type == 'text':
         create_and_write_text_file(sorted_data_result)
+    elif output_type == 'database':
+        create_database()
+        write_to_database(sorted_data_result)
     else:
-        create_and_write_to_database(sorted_data_result)
+        print("Invalid output type specified. Please specify either '-t' for text file or '-db' for SQLite database.")
+
 
 if __name__ == "__main__":
     main()
+    
