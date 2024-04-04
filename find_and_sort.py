@@ -3,9 +3,6 @@ import sqlite3
 import argparse
 
 
-def get_directory():
-    return os.getcwd()
-
 def list_items(directory):
     files = os.listdir(directory)
     return files
@@ -27,10 +24,11 @@ def get_data(directory, files):
             pure_meta.append((name, size, directory))
     return pure_meta
 
-def create_and_write_text_file(data):
-    with open('sorted_metadata.txt', 'w') as file:
+def create_and_write_text_file(data, filename='sorted_metadata.txt'):
+    with open(filename, 'w') as file:
         for item in data:
             file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
+        file.write("\n")
 
 
 def create_database(cursor, conn):
@@ -45,21 +43,18 @@ def write_to_database(data, cursor, conn):
                         VALUES (?, ?, ?)''', (name, size, directory))
     conn.commit()
     
-
 def get_data_from_database(cursor):
     cursor.execute("SELECT * FROM file_metadata")
     return cursor.fetchall()
-
 
 def save_in_database(data):
     with sqlite3.connect("sqlite.db") as conn:
         cursor = conn.cursor()
         create_database(cursor, conn)
         write_to_database(data, cursor, conn)
+        conn.commit()
         cursor.close()
-        conn.close()
-
-
+        
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Output file metadata to either a text file or a SQLite database.")
@@ -77,8 +72,8 @@ def parse_arguments():
 
 def main():
     output_type = parse_arguments()
-    directory = get_directory()
-    files = list_items(directory)
+    directory = (os.getcwd())
+    files = os.listdir(directory)
     data = get_data(directory, files)
     sorted_data_result = sorted(data, key=lambda x: x[1])
     
