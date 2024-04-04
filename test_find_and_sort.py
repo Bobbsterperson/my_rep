@@ -1,29 +1,26 @@
 import argparse
 import unittest
-from unittest.mock import patch
-from find_and_sort_pick_db_or_txt import parse_arguments
-from find_and_sort_pick_db_or_txt import list_items
-import os
-from find_and_sort_pick_db_or_txt import get_directory
-from find_and_sort_pick_db_or_txt import sorted_data
-from find_and_sort_pick_db_or_txt import create_and_write_text_file
-from find_and_sort_pick_db_or_txt import create_database
-from find_and_sort_pick_db_or_txt import write_to_database
 import sqlite3
+import os
 from unittest.mock import patch, MagicMock
-from find_and_sort_pick_db_or_txt import get_data
-from find_and_sort_pick_db_or_txt import get_data_from_database
+
+from find_and_sort import parse_arguments
+from find_and_sort import list_items
+from find_and_sort import get_directory
+from find_and_sort import sorted_data
+from find_and_sort import create_and_write_text_file
+from find_and_sort import create_database
+from find_and_sort import write_to_database
+from find_and_sort import get_data
+from find_and_sort import get_data_from_database
 
 class TestParseArguments(unittest.TestCase):
-    
-
     @patch('argparse.ArgumentParser.parse_args')
     def test_t(self, mock_parse_args):
         expected_args = argparse.Namespace(text = True,database = False)
         mock_parse_args.return_value = expected_args
         parsed_args = parse_arguments() 
         self.assertEqual(parsed_args, "text")
-        
 
     @patch('argparse.ArgumentParser.parse_args')  #patches parse_args() from ArgumentParser class from argparse module
     def test_db(self, mock_parse_args):
@@ -31,7 +28,6 @@ class TestParseArguments(unittest.TestCase):
         mock_parse_args.return_value = expected_args
         parsed_args = parse_arguments()
         self.assertEqual(parsed_args, "database")   
-
 
     @patch('argparse.ArgumentParser.parse_args')
     def test_no_argument(self, mock_parse_args):
@@ -43,37 +39,28 @@ class TestParseArguments(unittest.TestCase):
             self.assertEqual(e.code,2)
 
 
-
 class TestListItems(unittest.TestCase):
-
-
     @patch('os.listdir')
     def test_lst_itm(self, mock_listdir):
         expected_result = "get_directory(),os.listdir" # if i put this line after = in ("") it still works...
         mock_listdir.return_value = expected_result
         result = list_items(os.listdir)
         self.assertEqual(result, expected_result)
-    
 
 class TestGetDirectory(unittest.TestCase):
-
     def test_get_directory(self):
         result = get_directory()
         expected_result = os.getcwd()
         self.assertEqual(result, expected_result)
 
-
 class TestSortedData(unittest.TestCase):
-
     def test_sorted_data(self):
         unsorted_data = [('txt', 3), ('filename', 2), ('file', 1)]
         result = sorted_data(unsorted_data)
         expected_result = [('file', 1), ('filename', 2), ('txt', 3)]
         self.assertEqual(result, expected_result)
 
-    
 class TestTextfile(unittest.TestCase):
-
     def test_create_and_write_text_file(self):
         
         test_data = [
@@ -91,9 +78,7 @@ class TestTextfile(unittest.TestCase):
         self.assertIn("Directory: /path/to/directory2 - Name: file2.txt - Size: 200 bytes", content)
         self.assertIn("Directory: /path/to/directory3 - Name: file3.txt - Size: 300 bytes", content)
 
-
 class TestDatabaseFunctions(unittest.TestCase):
-
     def setUp(self):
         if os.path.exists("sqlite.db"):
             os.remove("sqlite.db")
@@ -101,7 +86,6 @@ class TestDatabaseFunctions(unittest.TestCase):
     def test_create_database(self):
         cursor = create_database()
         self.assertTrue(os.path.exists("sqlite.db"))
-        conn = sqlite3.connect("sqlite.db")
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='file_metadata'")
         result = cursor.fetchone()
         self.assertIsNotNone(result)
@@ -124,10 +108,7 @@ class TestDatabaseFunctions(unittest.TestCase):
         result = get_data_from_database(mock_cursor)
         self.assertEqual(result, data)
 
-
-
 class TestGetData(unittest.TestCase):
-
     @patch("find_and_sort_pick_db_or_txt.os")
     def test_get_data(self, mock_os):
         mock_os.path.join.side_effect = lambda *args: "/".join(args)
@@ -145,7 +126,6 @@ class TestGetData(unittest.TestCase):
         ]
 
         self.assertEqual(result, expected_result)
-
 
 if __name__ == '__main__':
     unittest.main()

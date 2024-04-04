@@ -1,15 +1,14 @@
 import os
 import sqlite3
+import argparse
 
 
 def get_directory():
     return os.getcwd()
 
-
 def list_items(directory):
     files = os.listdir(directory)
     return files
-
 
 def get_data(directory, files):
     pure_meta = []
@@ -37,31 +36,65 @@ def create_and_write_text_file(data):
     with open('sorted_metadata.txt', 'w') as file:
         for item in data:
             file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
-        file.write("\n")
 
 
-def create_and_write_to_database(data):
-    conn = sqlite3.connect("sqlite.db")
-    cursor = conn.cursor()
+def create_database(cursor, conn):
     cursor.execute('''CREATE TABLE IF NOT EXISTS file_metadata 
-                          (id INTEGER PRIMARY KEY, name TEXT, size INTEGER, directory TEXT)''')
+                    (id INTEGER PRIMARY KEY, name TEXT, size INTEGER, directory TEXT)''')
+    conn.commit()
+
+def write_to_database(data, cursor, conn):
     for item in data:
         name, size, directory = item
         cursor.execute('''INSERT INTO file_metadata (name, size, directory) 
-                              VALUES (?, ?, ?)''', (name, size, directory))
+                        VALUES (?, ?, ?)''', (name, size, directory))
     conn.commit()
-    cursor.close()
-    conn.close()
     
-    
+
+def get_data_from_database(cursor):
+    cursor.execute("SELECT * FROM file_metadata")
+    return cursor.fetchall()
+
+
+def save_in_database(data):
+    with sqlite3.connect("sqlite.db") as conn:
+        cursor = conn.cursor()
+        create_database(cursor, conn)
+        write_to_database(data, cursor, conn)
+        cursor.close()
+        conn.close()
+
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Output file metadata to either a text file or a SQLite database.")
+    parser.add_argument("-t", "--text", action="store_true", help="Output to text")
+    parser.add_argument("-db", "--database", action="store_true", help="Output to SQLite database")
+    args = parser.parse_args()
+
+    if args.text:
+        return 'text'
+    elif args.database:
+        return 'database'
+    else:
+        parser.error("Please specify either '-t' for text file or '-db' for SQLite database.")
+
+
 def main():
+    output_type = parse_arguments()
     directory = get_directory()
     files = list_items(directory)
     data = get_data(directory, files)
     sorted_data_result = sorted_data(data)
-    create_and_write_text_file(sorted_data_result)
-    create_and_write_to_database(sorted_data_result)
+    
+    if output_type == 'text':
+        create_and_write_text_file(sorted_data_result)
+    elif output_type == 'database':
+        save_in_database(sorted_data_result)
+    else:
+        print("Invalid output type specified. Please specify either '-t' for text file or '-db' for SQLite database.")
 
 
 if __name__ == "__main__":
     main()
+    
