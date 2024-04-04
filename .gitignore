@@ -1,0 +1,5 @@
+songs/
+venv/
+__pycache__/
+.idea/
+sorted_metadata.txt
