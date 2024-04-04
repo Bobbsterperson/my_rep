@@ -99,35 +99,20 @@ class TestDatabaseFunctions(unittest.TestCase):
             os.remove("sqlite.db")
 
     def test_create_database(self):
-        create_database()
+        cursor = create_database()
         self.assertTrue(os.path.exists("sqlite.db"))
         conn = sqlite3.connect("sqlite.db")
-        cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='file_metadata'")
         result = cursor.fetchone()
-        conn.close()
-        self.assertIsNotNone(result)
-
-    def test_database_creation(self):
-        create_database()
-        self.assertTrue(os.path.exists("sqlite.db"))
-        conn = sqlite3.connect("sqlite.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='file_metadata'")
-        result = cursor.fetchone()
-        conn.close()
         self.assertIsNotNone(result)
 
     def test_data_insertion(self):
         data = [("file1.txt", 100, "/path/to/directory1"),
                 ("file2.txt", 200, "/path/to/directory2")]
-        conn = sqlite3.connect("sqlite.db")
-        cursor = conn.cursor()
-        create_database()
+        cursor = create_database()
         write_to_database(data, cursor)
         cursor.execute("SELECT * FROM file_metadata")
         result = cursor.fetchall()
-        conn.close()
         self.assertEqual(len(result), len(data))
 
     @patch('find_and_sort_pick_db_or_txt.sqlite3.connect')
@@ -138,6 +123,7 @@ class TestDatabaseFunctions(unittest.TestCase):
         mock_cursor.fetchall.return_value = data
         result = get_data_from_database(mock_cursor)
         self.assertEqual(result, data)
+
 
 
 class TestGetData(unittest.TestCase):
