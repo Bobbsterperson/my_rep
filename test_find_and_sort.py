@@ -1,6 +1,6 @@
 import argparse
 import unittest
-import sqlite3
+
 import os
 from unittest.mock import patch, MagicMock
 

@@ -27,11 +27,6 @@ def get_data(directory, files):
             pure_meta.append((name, size, directory))
     return pure_meta
 
-
-def sorted_data(data):
-    return sorted(data, key=lambda x: x[1])
-
-
 def create_and_write_text_file(data):
     with open('sorted_metadata.txt', 'w') as file:
         for item in data:
@@ -85,7 +80,7 @@ def main():
     directory = get_directory()
     files = list_items(directory)
     data = get_data(directory, files)
-    sorted_data_result = sorted_data(data)
+    sorted_data_result = sorted(data, key=lambda x: x[1])
     
     if output_type == 'text':
         create_and_write_text_file(sorted_data_result)
