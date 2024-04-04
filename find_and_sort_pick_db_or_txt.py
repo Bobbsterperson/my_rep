@@ -34,11 +34,12 @@ def sorted_data(data):
     return sorted(data, key=lambda x: x[1])
 
 
-def create_and_write_text_file(data):
-    with open('sorted_metadata.txt', 'w') as file:
+def create_and_write_text_file(data, filename='sorted_metadata.txt'):
+    with open(filename, 'w') as file:
         for item in data:
             file.write(f"Directory: {item[2]} - Name: {item[0]} - Size: {item[1]} bytes\n")
         file.write("\n")
+
 
 
 def create_database():
@@ -54,7 +55,7 @@ def write_to_database(data, cursor):
         name, size, directory = item
         cursor.execute('''INSERT INTO file_metadata (name, size, directory) 
                               VALUES (?, ?, ?)''', (name, size, directory))
-    
+    cursor.connection.commit()
 
 def get_data_from_database(cursor):
     cursor.execute("SELECT * FROM file_metadata")
