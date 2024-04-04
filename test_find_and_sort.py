@@ -1,18 +1,10 @@
 import argparse
 import unittest
-from unittest.mock import patch
-from find_and_sort_pick_db_or_txt import parse_arguments
-from find_and_sort_pick_db_or_txt import list_items
-import os
-from find_and_sort_pick_db_or_txt import get_directory
-from find_and_sort_pick_db_or_txt import sorted_data
-from find_and_sort_pick_db_or_txt import create_and_write_text_file
-from find_and_sort_pick_db_or_txt import create_database
-from find_and_sort_pick_db_or_txt import write_to_database
 import sqlite3
 from unittest.mock import patch, MagicMock
-from find_and_sort_pick_db_or_txt import get_data
-from find_and_sort_pick_db_or_txt import get_data_from_database
+import os
+from find_and_sort_pick_db_or_txt import parse_arguments, list_items, get_directory, sorted_data, create_and_write_text_file, create_database, write_to_database, get_data, get_data_from_database
+
 
 class TestParseArguments(unittest.TestCase):
     
@@ -49,7 +41,7 @@ class TestListItems(unittest.TestCase):
 
     @patch('os.listdir')
     def test_lst_itm(self, mock_listdir):
-        expected_result = "get_directory(),os.listdir" # if i put this line after = in ("") it still works...
+        expected_result = get_directory(),os.listdir 
         mock_listdir.return_value = expected_result
         result = list_items(os.listdir)
         self.assertEqual(result, expected_result)
@@ -94,14 +86,29 @@ class TestTextfile(unittest.TestCase):
 
 class TestDatabaseFunctions(unittest.TestCase):
 
-    def setUp(self):
+    def __init__(self, *args, **kwargs):
+        super(TestDatabaseFunctions, self).__init__(*args, **kwargs)
+        
         if os.path.exists("sqlite.db"):
             os.remove("sqlite.db")
+
+        self.connection = None
+
+    def setUp(self):
+        self.connection = self.create_database_connection()
+
+    def tearDown(self):
+        if self.connection:
+            self.connection.close()
+        if os.path.exists("sqlite.db"):
+            os.remove("sqlite.db")
+
+    def create_database_connection(self):
+        return sqlite3.connect("sqlite.db")
 
     def test_create_database(self):
         cursor = create_database()
         self.assertTrue(os.path.exists("sqlite.db"))
-        conn = sqlite3.connect("sqlite.db")
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='file_metadata'")
         result = cursor.fetchone()
         self.assertIsNotNone(result)
@@ -115,15 +122,18 @@ class TestDatabaseFunctions(unittest.TestCase):
         result = cursor.fetchall()
         self.assertEqual(len(result), len(data))
 
-    @patch('find_and_sort_pick_db_or_txt.sqlite3.connect')
-    def test_data_retrieval(self, mock_connect):
+    def test_data_retrieval(self):
         data = [("file1.txt", 100, "/path/to/directory1"),
                 ("file2.txt", 200, "/path/to/directory2")]
-        mock_cursor = mock_connect.return_value.cursor.return_value
-        mock_cursor.fetchall.return_value = data
-        result = get_data_from_database(mock_cursor)
-        self.assertEqual(result, data)
 
+        with patch('find_and_sort_pick_db_or_txt.sqlite3') as mock_sqlite3:
+            mock_connection = mock_sqlite3.connect.return_value
+            mock_cursor = mock_connection.cursor.return_value
+            mock_cursor.fetchall.return_value = data
+            
+            cursor = self.connection.cursor()
+            result = get_data_from_database(cursor)
+            self.assertEqual(result, data)
 
 
 class TestGetData(unittest.TestCase):
