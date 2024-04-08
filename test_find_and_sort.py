@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 import sqlite3
-from find_and_sort import parse_arguments, list_items, create_and_write_text_file, create_database, write_to_database, get_data, get_data_from_database, save_in_database
+from find_and_sort import parse_arguments, create_and_write_text_file, create_database, write_to_database, get_data, get_data_from_database
 
 class TestParseArguments(unittest.TestCase):
     
@@ -30,32 +30,6 @@ class TestParseArguments(unittest.TestCase):
             parsed_args = parse_arguments() 
         except SystemExit as e:
             self.assertEqual(e.code,2)
-
-class TestListItems(unittest.TestCase):
-
-    def setUp(self):
-        self.test_dir = 'test_directory'
-        os.makedirs(self.test_dir, exist_ok=True)
-        open(os.path.join(self.test_dir, 'file1.txt'), 'a').close()
-        open(os.path.join(self.test_dir, 'file2.txt'), 'a').close()
-        open(os.path.join(self.test_dir, 'file3.txt'), 'a').close()
-
-    def test_list_items(self):
-        expected_files = ['file1.txt', 'file2.txt', 'file3.txt']
-        returned_files = list_items(self.test_dir)
-        self.assertCountEqual(expected_files, returned_files)
-
-    def tearDown(self):
-        for file in os.listdir(self.test_dir):
-            file_path = os.path.join(self.test_dir, file)
-            if os.path.isfile(file_path):
-                with open(file_path, 'a'):
-                    pass 
-        for file in os.listdir(self.test_dir):
-            file_path = os.path.join(self.test_dir, file)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-        os.rmdir(self.test_dir)
         
 class TestTextfile(unittest.TestCase):
     def test_create_and_write_text_file(self):
@@ -97,7 +71,7 @@ class TestDatabase(unittest.TestCase):
         write_to_database(data, cursor, conn)
         cursor.execute("SELECT * FROM file_metadata")
         result = cursor.fetchall()
-        self.assertEqual(len(result), 2) 
+        self.assertEqual(len(result), len(data)) 
         conn.close()
 
     def test_get_data_from_database(self):
@@ -131,32 +105,38 @@ class TestDatabase(unittest.TestCase):
             self.assertEqual(row[1:], test_data[i]) 
 
 class TestDataCollection(unittest.TestCase):
-    
+
+    def setUp(self):
+        self.test_directory = 'test_data'
+        os.makedirs(self.test_directory)
+        file_paths = [
+            os.path.join(self.test_directory, 'file1.txt'),
+            os.path.join(self.test_directory, 'file2.txt'),
+            os.path.join(self.test_directory, 'subdir', 'file3.txt')
+        ]
+        for file_path in file_paths:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w') as f:
+                f.write('This is a test file')
+
     def test_get_data(self):
-        test_dir = 'test_directory'
-        os.makedirs(os.path.join(test_dir, 'subdir1'))
-        os.makedirs(os.path.join(test_dir, 'subdir2'))
-        with open(os.path.join(test_dir, 'file1.txt'), 'w') as f:
-            f.write('This is file 1')
-        with open(os.path.join(test_dir, 'subdir1', 'file2.txt'), 'w') as f:
-            f.write('This is file 2')
-        with open(os.path.join(test_dir, 'subdir2', 'file3.txt'), 'w') as f:
-            f.write('This is file 3')
-        
-        files = os.listdir(test_dir)
-        data = get_data(test_dir, files)
-        
-        os.remove(os.path.join(test_dir, 'file1.txt'))
-        os.remove(os.path.join(test_dir, 'subdir1', 'file2.txt'))
-        os.remove(os.path.join(test_dir, 'subdir2', 'file3.txt'))
-        os.rmdir(os.path.join(test_dir, 'subdir1'))
-        os.rmdir(os.path.join(test_dir, 'subdir2'))
-        os.rmdir(test_dir)
     
-        self.assertEqual(len(data), 3)
-        self.assertTrue(('file1.txt', 14, test_dir) in data)
-        self.assertTrue(('file2.txt', 14, os.path.join(test_dir, 'subdir1')) in data)
-        self.assertTrue(('file3.txt', 14, os.path.join(test_dir, 'subdir2')) in data)
+        expected_result = [
+            ('file1.txt', os.stat(os.path.join(self.test_directory, 'file1.txt')).st_size, self.test_directory),
+            ('file2.txt', os.stat(os.path.join(self.test_directory, 'file2.txt')).st_size, self.test_directory),
+            ('file3.txt', os.stat(os.path.join(self.test_directory, 'subdir', 'file3.txt')).st_size, os.path.join(self.test_directory, 'subdir'))
+        ]
+        actual_result = get_data(self.test_directory)
+        self.assertEqual(sorted(expected_result), sorted(actual_result))
+
+    def tearDown(self):
+        
+        for root, dirs, files in os.walk(self.test_directory, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(self.test_directory)
 
 if __name__ == '__main__':
     unittest.main()
